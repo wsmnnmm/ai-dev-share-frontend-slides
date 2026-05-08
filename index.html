@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 编程工具实战分享</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(91, 141, 239, 0.18), transparent 25%),
+          radial-gradient(circle at bottom left, rgba(88, 204, 120, 0.14), transparent 25%),
+          #0b1020;
+        color: #e7ecf5;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding-top) var(--slide-padding-x) var(--slide-padding-bottom);
+        position: relative;
+      }
+
+      :root {
+        --bg-primary: #0b1020;
+        --bg-secondary: #121933;
+        --panel-bg: rgba(18, 25, 51, 0.82);
+        --panel-strong: rgba(16, 22, 42, 0.95);
+        --text-primary: #e7ecf5;
+        --text-secondary: #9eaac1;
+        --accent: #7cc8ff;
+        --accent-2: #7ee787;
+        --danger: #ff8e8e;
+        --border: rgba(255, 255, 255, 0.09);
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+        --font-display: "IBM Plex Sans", sans-serif;
+        --font-mono: "JetBrains Mono", "Fira Code", "Menlo", monospace;
+        --title-size: clamp(1.8rem, 5vw, 4.8rem);
+        --h2-size: clamp(1.25rem, 3vw, 2.5rem);
+        --h3-size: clamp(1rem, 2vw, 1.35rem);
+        --body-size: clamp(0.85rem, 1.2vw, 1.05rem);
+        --small-size: clamp(0.68rem, 1vw, 0.85rem);
+        --slide-padding-top: clamp(1.15rem, 3vw, 2.7rem);
+        --slide-padding-bottom: clamp(1.2rem, 3.4vw, 2.8rem);
+        --slide-padding-x: clamp(1rem, 4vw, 4.2rem);
+        --content-gap: clamp(0.75rem, 1.4vw, 1.3rem);
+        --element-gap: clamp(0.35rem, 0.8vw, 0.75rem);
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration-normal: 0.6s;
+        --page-intro-max: 24vh;
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+      }
+
+      img,
+      .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+      }
+
+      @media (max-height: 700px) {
+        :root {
+          --slide-padding-top: clamp(0.85rem, 2.2vw, 1.5rem);
+          --slide-padding-bottom: clamp(0.9rem, 2.4vw, 1.6rem);
+          --slide-padding-x: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.45rem, 1.2vw, 0.9rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+          --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+      }
+
+      @media (max-height: 600px) {
+        :root {
+          --slide-padding-top: clamp(0.6rem, 1.8vw, 1rem);
+          --slide-padding-bottom: clamp(0.65rem, 1.9vw, 1.05rem);
+          --slide-padding-x: clamp(0.5rem, 2.5vw, 1.5rem);
+          --content-gap: clamp(0.3rem, 0.9vw, 0.7rem);
+          --title-size: clamp(1.1rem, 4vw, 2rem);
+          --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+
+        .nav-dots,
+        .keyboard-hint,
+        .decorative {
+          display: none;
+        }
+      }
+
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding-top: clamp(0.45rem, 1.5vw, 0.8rem);
+          --slide-padding-bottom: clamp(0.45rem, 1.5vw, 0.8rem);
+          --slide-padding-x: clamp(0.4rem, 2vw, 1rem);
+          --title-size: clamp(1rem, 3.5vw, 1.5rem);
+          --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+          --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .two-col,
+        .hero-grid,
+        .split-grid,
+        .case-grid,
+        .tool-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .cover-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .metric-row {
+          grid-template-columns: 1fr !important;
+        }
+
+        .workflow-line {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .workflow-arrow {
+          transform: rotate(90deg);
+          justify-content: center;
+          padding: 0.5rem 0;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .cover-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .nav-dots {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        width: 0;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        z-index: 1000;
+        box-shadow: 0 0 24px rgba(124, 200, 255, 0.4);
+      }
+
+      .nav-dots {
+        position: fixed;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 999;
+      }
+
+      .nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.2s ease, background 0.2s ease;
+        cursor: pointer;
+      }
+
+      .nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.25);
+      }
+
+      .deck-label {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .slide-title {
+        font-family: var(--font-display);
+        font-size: var(--title-size);
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+        max-width: none;
+        width: min(72vw, 1280px);
+        text-wrap: balance;
+        font-weight: 700;
+      }
+
+      .section-title {
+        font-size: var(--h2-size);
+        line-height: 1.15;
+        margin-bottom: 0;
+        max-width: none;
+        width: 100%;
+        text-wrap: balance;
+        letter-spacing: -0.02em;
+      }
+
+      .lede,
+      .body-text,
+      .bullet-list li,
+      .metric-copy,
+      .tool-copy,
+      .timeline-copy {
+        font-size: var(--body-size);
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition:
+          opacity var(--duration-normal) var(--ease-out-expo),
+          transform var(--duration-normal) var(--ease-out-expo);
+      }
+
+      .slide.visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .slide.visible .reveal:nth-child(1) {
+        transition-delay: 0.08s;
+      }
+
+      .slide.visible .reveal:nth-child(2) {
+        transition-delay: 0.16s;
+      }
+
+      .slide.visible .reveal:nth-child(3) {
+        transition-delay: 0.24s;
+      }
+
+      .slide.visible .reveal:nth-child(4) {
+        transition-delay: 0.32s;
+      }
+
+      .hero-grid,
+      .two-col,
+      .split-grid,
+      .case-grid,
+      .tool-grid {
+        display: grid;
+        gap: clamp(1.1rem, 1.9vw, 1.7rem);
+      }
+
+      .hero-grid {
+        grid-template-columns: 1.2fr 0.8fr;
+        align-items: center;
+      }
+
+      .cover-header {
+        width: 100%;
+        max-width: min(90vw, 1520px);
+      }
+
+      .cover-title {
+        width: min(86vw, 1480px);
+        max-width: none;
+      }
+
+      .cover-summary {
+        max-width: 82ch;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        line-height: 1.7;
+        color: var(--text-secondary);
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        background: rgba(255, 255, 255, 0.025);
+        border-radius: 20px;
+        border-left: 3px solid var(--accent);
+      }
+
+      .cover-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(1.2rem, 2vw, 1.8rem);
+      }
+
+      .cover-card {
+        min-height: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .cover-card:hover {
+        transform: translateY(-4px);
+      }
+
+      .cover-card-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: clamp(0.8rem, 1.2vw, 1.1rem);
+        margin-bottom: clamp(0.8rem, 1.1vw, 0.95rem);
+        font-size: clamp(1rem, 1.5vw, 1.3rem);
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .cover-card-role {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--accent);
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .cover-card-copy {
+        font-size: var(--body-size);
+        line-height: 1.65;
+        color: var(--text-secondary);
+      }
+
+      .two-col {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tool-grid,
+      .case-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: stretch;
+      }
+
+      .panel {
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow:
+          0 14px 42px rgba(0, 0, 0, 0.26),
+          inset 0 1px 0 rgba(255, 255, 255, 0.025);
+        backdrop-filter: blur(18px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .panel:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 18px 50px rgba(0, 0, 0, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      }
+
+      .panel.pad {
+        padding: clamp(1.1rem, 1.8vw, 1.5rem);
+      }
+
+      .status-pill {
+        padding: clamp(0.4rem, 0.7vw, 0.6rem) clamp(0.8rem, 1.1vw, 1rem);
+        border-radius: 999px;
+        background: rgba(126, 231, 135, 0.1);
+        color: var(--accent-2);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        border: 1px solid rgba(126, 231, 135, 0.2);
+        letter-spacing: 0.03em;
+      }
+
+      .hero-list,
+      .bullet-list,
+      .mini-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.85rem, 1.3vw, 1.1rem);
+      }
+
+      .hero-list li,
+      .bullet-list li,
+      .mini-list li {
+        background: rgba(255, 255, 255, 0.032);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: clamp(0.9rem, 1.2vw, 1.1rem) clamp(1rem, 1.4vw, 1.25rem);
+        line-height: 1.6;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .hero-list li:hover,
+      .bullet-list li:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .mini-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .accent {
+        color: var(--accent);
+      }
+
+      .danger {
+        color: var(--danger);
+      }
+
+      .tool-card {
+        display: grid;
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+      }
+
+      .code-snippet {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        background: linear-gradient(135deg, #0d1528 0%, #101a36 100%);
+        border: 1px solid rgba(124, 200, 255, 0.15);
+        border-radius: 18px;
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        overflow: hidden;
+        line-height: 1.7;
+        color: #c9d6f0;
+        position: relative;
+      }
+
+      .code-snippet::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(124, 200, 255, 0.3), transparent);
+      }
+
+      .screenshot-frame {
+        background: var(--panel-strong);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease;
+      }
+
+      .screenshot-frame img {
+        width: 100%;
+        border-radius: 16px;
+        max-height: min(45vh, 360px);
+        object-fit: contain;
+        background: rgba(255, 255, 255, 0.04);
+        cursor: zoom-in;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      .screenshot-frame img:hover {
+        transform: scale(1.02) translateY(-3px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+      }
+
+      .caption {
+        margin-top: clamp(0.9rem, 1.4vw, 1.2rem);
+        padding: 0 clamp(0.5rem, 1vw, 0.8rem);
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.6;
+        border-left: 2px solid rgba(124, 200, 255, 0.25);
+        font-style: italic;
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+      }
+
+      .metric-box {
+        padding: clamp(1rem, 1.4vw, 1.3rem);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .metric-box:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+      }
+
+      .metric-num {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+        color: var(--accent);
+        margin-bottom: clamp(0.4rem, 0.7vw, 0.6rem);
+        letter-spacing: -0.02em;
+      }
+
+      .timeline {
+        display: grid;
+        gap: clamp(1rem, 1.5vw, 1.4rem);
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+        align-items: start;
+      }
+
+      .timeline-num {
+        width: clamp(2rem, 2.5vw, 2.4rem);
+        height: clamp(2rem, 2.5vw, 2.4rem);
+        border-radius: 999px;
+        background: rgba(124, 200, 255, 0.14);
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: clamp(0.85rem, 1.1vw, 1rem);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(124, 200, 255, 0.2);
+      }
+
+      .workflow-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: clamp(0.9rem, 1.5vw, 1.25rem);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .workflow-node {
+        padding: clamp(0.85rem, 1.2vw, 1.1rem) clamp(1.1rem, 1.6vw, 1.4rem);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        font-size: var(--body-size);
+        line-height: 1.5;
+        white-space: nowrap;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .workflow-node:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+      }
+
+      .workflow-arrow {
+        display: flex;
+        align-items: center;
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        opacity: 0.7;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .workflow-arrow:hover {
+        opacity: 1;
+        transform: translateX(3px);
+      }
+
+      .footer-note {
+        position: absolute;
+        bottom: clamp(1rem, 2vw, 1.4rem);
+        left: var(--slide-padding-x);
+        right: var(--slide-padding-x);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--small-size);
+        color: rgba(231, 236, 245, 0.5);
+        font-family: var(--font-mono);
+        letter-spacing: 0.02em;
+      }
+
+      .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.2rem, 2vw, 1.8rem);
+        height: 100%;
+      }
+
+      .hero-shell {
+        justify-content: center;
+      }
+
+      .eyebrow-row {
+        display: flex;
+        align-items: center;
+        gap: clamp(0.8rem, 1.2vw, 1.1rem);
+        flex-wrap: wrap;
+      }
+
+      .intro-stack {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.6rem, 1.1vw, 0.9rem);
+        align-content: start;
+        width: min(78vw, 1280px);
+        max-height: none;
+        overflow: visible;
+        margin-bottom: clamp(0.3rem, 0.9vw, 0.7rem);
+      }
+
+      .content-zone {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        gap: clamp(1.2rem, 1.8vw, 1.6rem);
+      }
+
+      .speaker-line {
+        font-size: clamp(0.95rem, 1.2vw, 1.06rem);
+        color: rgba(231, 236, 245, 0.9);
+        line-height: 1.58;
+        max-width: 64ch;
+      }
+
+      .title-wide {
+        width: min(82vw, 1380px);
+      }
+
+      .stack-gap-md {
+        margin-top: clamp(0.9rem, 1.4vw, 1.15rem);
+      }
+
+      .stack-gap-lg {
+        margin-top: clamp(1.1rem, 1.7vw, 1.35rem);
+      }
+
+      .bullet-list {
+        gap: clamp(0.8rem, 1.2vw, 1rem);
+      }
+
+      .bullet-list li + li,
+      .mini-list li + li,
+      .hero-list li + li {
+        margin-top: 0;
+      }
+
+      .point-label {
+        display: inline-flex;
+        align-items: center;
+        gap: clamp(0.5rem, 0.8vw, 0.7rem);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent-2);
+        font-weight: 500;
+      }
+
+      .point-label::before {
+        content: "";
+        width: clamp(8px, 0.8vw, 10px);
+        height: clamp(8px, 0.8vw, 10px);
+        border-radius: 999px;
+        background: var(--accent-2);
+        box-shadow: 0 0 18px rgba(126, 231, 135, 0.5);
+        flex-shrink: 0;
+      }
+
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 8, 18, 0.88);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 2000;
+      }
+
+      .lightbox.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .lightbox img {
+        width: auto;
+        max-width: min(92vw, 1600px);
+        max-height: 88vh;
+        border-radius: 18px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.56);
+        background: #0b1020;
+      }
+
+      .lightbox-close {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.2rem;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+        font-size: 1.35rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" id="progressBar"></div>
+    <nav class="nav-dots" id="navDots"></nav>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack cover-header">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">AI DEV SHARE / FRONTEND SLIDES</span>
+              <span class="status-pill">我的实战版</span>
+            </div>
+            <h1 class="slide-title cover-title reveal">我怎么把 AI 编程工具一点点接进研发工作流</h1>
+          </div>
+          <div class="content-zone">
+            <p class="cover-summary reveal">
+              这不是工具说明书，也不是模型横评。更像一次阶段性复盘：我最近怎么用 <span class="accent">Codex</span>、<span class="accent">Claude Code</span>、<span class="accent">Skills</span>、<span class="accent">MCP</span>、<span class="accent">qclaw</span>、<span class="accent">WorkBuddy</span> 去做事、踩坑、协作和收口。
+            </p>
+            <div class="cover-grid">
+              <div class="panel pad cover-card reveal">
+                <div class="cover-card-title">
+                  <span>Codex</span>
+                  <span class="cover-card-role">更像执行位</span>
+                </div>
+                <p class="cover-card-copy">我更关心的不是谁最聪明，而是谁更适合放在工作流的哪个位置。</p>
+              </div>
+              <div class="panel pad cover-card reveal">
+                <div class="cover-card-title">
+                  <span>Claude Code</span>
+                  <span class="cover-card-role">更像拆解位</span>
+                </div>
+                <p class="cover-card-copy">这套分享会讲真实成本、桥接体验、协作分工和我目前的判断。</p>
+              </div>
+              <div class="panel pad cover-card reveal">
+                <div class="cover-card-title">
+                  <span>Skills + MCP</span>
+                  <span class="cover-card-role">补能力缺口</span>
+                </div>
+                <p class="cover-card-copy">不是先装满生态，而是先知道什么问题该交给什么能力去补。</p>
+              </div>
+              <div class="panel pad cover-card reveal">
+                <div class="cover-card-title">
+                  <span>qclaw + WorkBuddy</span>
+                  <span class="cover-card-role">往真实任务里接</span>
+                </div>
+                <p class="cover-card-copy">有些地方我已经很确定，有些地方我还在试，但都值得拿出来讲真话。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>01 / Cover</span>
+        <span>Arrow keys / Space / Swipe</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 02</span>
+              <span class="status-pill">48 小时事件线</span>
+            </div>
+            <h2 class="section-title reveal">我不是先有成熟方法，而是先在混乱里把东西跑起来</h2>
+            <p class="speaker-line reveal">这页我想先把背景说清楚：这套分享不是事后总结出来的漂亮框架，而是我最近 48 小时边折腾边形成的真实经验。</p>
+          </div>
+          <div class="content-zone">
+            <div class="two-col">
+              <div class="panel pad reveal">
+                <div class="timeline">
+                  <div class="timeline-item">
+                    <span class="timeline-num">1</span>
+                    <div class="timeline-copy">昨天开始正式折腾 Codex 和 Claude Code 桥接，多 agent 互相讨论和 battle。</div>
+                  </div>
+                  <div class="timeline-item">
+                    <span class="timeline-num">2</span>
+                    <div class="timeline-copy">开始尝试 qclaw / OpenClaw / WorkBuddy 的联通，希望它们能交接任务、互相评审。</div>
+                  </div>
+                  <div class="timeline-item">
+                    <span class="timeline-num">3</span>
+                    <div class="timeline-copy">把话题从“工具能不能聊”切到“能不能看 bug 文档、分析 bug、改 bug”。</div>
+                  </div>
+                  <div class="timeline-item">
+                    <span class="timeline-num">4</span>
+                    <div class="timeline-copy">过程中出现了 token 成本、权限、桥接稳定性、上下文膨胀这些很真实的问题。</div>
+                  </div>
+                  <div class="timeline-item">
+                    <span class="timeline-num">5</span>
+                    <div class="timeline-copy">最后我意识到，应该把这些经验沉淀成一套能拿去分享、还能继续迭代的网页 PPT。</div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel pad reveal">
+                <div class="point-label">我这页的判断</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>这些内容的可信度，不来自定义，而来自它们刚刚真的发生过。</li>
+                  <li>我自己也不是一开始就清楚，只是先有动作，再慢慢收成方法。</li>
+                  <li>所以后面每一页，我都尽量讲“我怎么做”和“我现在怎么想”。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>02 / Timeline</span>
+        <span>从折腾到项目化沉淀</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 03</span>
+              <span class="status-pill">工作流总图</span>
+            </div>
+            <h2 class="section-title reveal">我现在最笃定的一点：工具名不重要，交接链路更重要</h2>
+            <p class="speaker-line reveal">如果只记工具名，最后很容易变成一页生态地图。但我最近最有启发的，其实是慢慢看清楚谁该先上、谁该补位、谁该做最后验收。</p>
+          </div>
+          <div class="content-zone">
+            <div class="panel pad reveal">
+              <div class="workflow-line">
+                <div class="workflow-node">人定目标</div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-node">Claude Code 拆解 / 复核</div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-node">Codex 执行 / 验证</div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-node">Skills / MCP / Bridge 补能力</div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-node">人验收 / 继续追问</div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-node">沉淀成 SOP / 提示词 / 页面</div>
+              </div>
+            </div>
+            <div class="tool-grid">
+              <div class="panel pad reveal">
+                <div class="point-label">我现在的分工理解</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li><span class="accent mono">Codex</span>：更像进工程现场干活的人，读目录、改代码、验证结果。</li>
+                  <li><span class="accent mono">Claude Code</span>：更像拆解、互评、补视角的人，适合帮我把混乱问题讲清楚。</li>
+                  <li><span class="accent mono">qclaw / WorkBuddy</span>：不是主角，而是工作任务的交接通道和集成场。</li>
+                </ul>
+              </div>
+              <div class="panel pad reveal">
+                <div class="point-label">这条链路为什么重要</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>工具多不是问题，问题是它们如果并列摆着，就很难形成产出。</li>
+                  <li>我真正想讲的是：谁先拆，谁先干，谁来复核，谁来背交付。</li>
+                  <li>这也是后面讲 Skills、MCP 和 Bridge 时，我最看重的判断标准。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>03 / Workflow</span>
+        <span>工具要挂在流程上</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 04</span>
+              <span class="status-pill">Codex</span>
+            </div>
+            <h2 class="section-title reveal">Codex：让它先试，你再审</h2>
+          </div>
+          <div class="content-zone">
+            <div class="case-grid">
+              <div class="panel pad reveal">
+                <div class="tool-card">
+                  <p class="tool-copy">我现在最认可 Codex 的位置，不是"比谁更会解释"，而是它更像能进项目现场帮我做事的执行位。</p>
+                  <ul class="bullet-list">
+                    <li>先让它摸目录、看文档、归纳当前上下文，再进入具体任务。</li>
+                    <li>适合做"给我改、给我验、给我落文件"的动作，不只是聊天。</li>
+                    <li>当任务边界清楚时，它的推进速度比我自己手动切来切去快很多。</li>
+                  </ul>
+                  <div class="code-snippet">
+                    <div># 我现在更常见的用法</div>
+                    <div>1. 先让它总结代码库和限制</div>
+                    <div>2. 再让它只改一小块</div>
+                    <div>3. 最后看 diff / 结果 / 风险</div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel pad reveal">
+                <h3 class="section-title">我踩过的坑</h3>
+                <ul class="bullet-list">
+                  <li>上下文不够时，它会认真地往错方向干。</li>
+                  <li>如果我自己没定义验收标准，最后很容易"看起来改了，其实没收口"。</li>
+                  <li>把大而糊的任务直接丢进去，效率会明显下降。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>04 / Codex</span>
+        <span>执行前先收边界</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 05</span>
+              <span class="status-pill">Claude Code</span>
+            </div>
+            <h2 class="section-title reveal">Claude Code：对我来说最强的不是写代码，而是把乱问题拆开</h2>
+            <p class="speaker-line reveal">如果要我用一句话形容它现在在我工作流里的位置，我会说：它更像一个很会帮我拆题、对照、互评的搭子，但成本感要一直带着。</p>
+          </div>
+          <div class="content-zone">
+            <div class="case-grid">
+              <div class="panel pad reveal">
+                <div class="point-label">我现在最常拿它干什么</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>先帮我拆解混乱问题，再决定值不值得交给另一个 agent 去做。</li>
+                  <li>做方案比较、互评、battle、复盘，这类“需要补视角”的事它很适合。</li>
+                  <li>面对我这种脑子里有很多碎片、但还没收成结构的时候，它特别有用。</li>
+                </ul>
+              </div>
+              <div class="panel pad reveal">
+                <div class="point-label">我踩过的坑也很明确</div>
+                <div class="metric-row" style="margin-top: 0.8rem;">
+                  <div class="metric-box">
+                    <span class="metric-num">$404.42</span>
+                    <span class="metric-copy">长对话一旦失控，token 和费用会先把问题暴露出来。</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-num">$83.87</span>
+                    <span class="metric-copy">不是只有最强模型贵，第二梯队长期跑下来也会有体感。</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-num">225.2M</span>
+                    <span class="metric-copy">我现在会主动问自己：这个任务到底值不值得长上下文。</span>
+                  </div>
+                </div>
+                <p class="caption">下一页我直接放真实截图，因为这件事靠口头讲不够有冲击力。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>05 / Claude Code</span>
+        <span>拆解强，但要管上下文和成本</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 06</span>
+              <span class="status-pill">成本 / 实战数据</span>
+            </div>
+            <h2 class="section-title reveal">我开始高频用 AI 之后，最先被教育的其实是成本感</h2>
+            <p class="speaker-line reveal">这张图我一定会留着，因为它逼着我从“这个工具好不好用”继续往下想，去看“这套工作流能不能长期跑”。</p>
+          </div>
+          <div class="content-zone">
+            <div class="tool-grid">
+              <div class="screenshot-frame reveal">
+                <img src="./assets/token-cost.png" alt="token and cost" class="zoomable" />
+                <p class="caption">过去一段时间的模型调用与费用分布。这个图不是为了吓人，而是提醒我：方法不稳，token 会先告诉你。</p>
+              </div>
+              <div class="panel pad reveal">
+                <div class="point-label">这张图给我的 3 个提醒</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>多 agent 协作不是“免费想象力”，它真的会回到成本上。</li>
+                  <li>我现在更在意的是：什么任务值得长对话，什么任务应该快拆快干。</li>
+                  <li>如果只拿工具好不好用来判断，很容易忽略“能不能长期用”的问题。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>06 / Cost</span>
+        <span>真实数据页</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 07</span>
+              <span class="status-pill">qclaw / WorkBuddy</span>
+            </div>
+            <h2 class="section-title reveal">这部分我不想吹大，我更想讲一件“已经跑通”的事</h2>
+            <p class="speaker-line reveal">qclaw / OpenClaw 和 WorkBuddy 我还没有大规模带进长期真实项目，但我至少已经验证了一条可用的桥接路径：共享目录 + 定时轮询。这一页我只讲我已经确认过的东西。</p>
+          </div>
+          <div class="content-zone">
+            <div class="tool-grid">
+              <div class="panel pad reveal">
+                <div class="point-label">我已经验证到哪一步了</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>WorkBuddy 和 qclaw 的双向交接，至少在文件级别已经跑通。</li>
+                  <li>当前采用的方案是 <span class="accent mono">共享目录 + 定时轮询</span>，不是最优雅，但足够稳、足够低依赖。</li>
+                  <li>这对我最大的启发不是“桥好酷”，而是跨 agent 协作必须先有一条最朴素的落地通道。</li>
+                  <li>我下一步才会把它往 bug 分析、任务派发、结果回传这些真实工作里带。</li>
+                </ul>
+              </div>
+              <div class="screenshot-frame reveal">
+                <img src="./assets/api-details.png" alt="qclaw workbuddy bridge detail" class="zoomable" />
+                <p class="caption">这一类结果对我最重要的价值，不是炫技，而是证明：在没有暴露本地 API 的前提下，也能先把交接链路跑起来。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>07 / Bridge</span>
+        <span>先验证一条稳通路，再谈规模化使用</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="intro-stack">
+            <div class="eyebrow-row reveal">
+              <span class="deck-label">PAGE 08</span>
+              <span class="status-pill">双 agent 复盘</span>
+            </div>
+            <h2 class="section-title reveal">这次做 PPT，双 agent 没有自动让我更稳</h2>
+            <p class="speaker-line reveal">这个结论我想明确讲出来：如果多一个 agent 只是多一层意见、多一轮建议、多一个分叉，那它不但不会更稳，反而会增加返工。这次做 PPT 的过程，我就明显感受到了这件事。</p>
+          </div>
+          <div class="content-zone">
+            <div class="tool-grid">
+              <div class="screenshot-frame reveal">
+                <img src="./assets/battle-consensus.png" alt="battle consensus" class="zoomable" />
+                <p class="caption">battle 本身并不等于高质量。真正有价值的是：它有没有明确承担批判、对照、校验的职责。</p>
+              </div>
+              <div class="panel pad reveal">
+                <div class="point-label">我这次踩到的 4 个问题</div>
+                <ul class="bullet-list" style="margin-top: 0.8rem;">
+                  <li>brief 太宽，讨论可以发散，但执行需要收口，这两者没有被分开。</li>
+                  <li>第二个 agent 很多时候只是在提建议，没有扮演明确的验收或批判角色。</li>
+                  <li>做 PPT / 做前端这种任务，审美和内容判断如果不统一，就会不断返工。</li>
+                  <li>没有统一验收标准时，双 agent 只是把“可能错的地方”翻倍了。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        <span>08 / Retro</span>
+        <span>双 agent 不是神话，得有清晰角色和验收</span>
+      </div>
+    </section>
+
+    <div class="lightbox" id="lightbox">
+      <button class="lightbox-close" id="lightboxClose" aria-label="Close image">×</button>
+      <img id="lightboxImage" alt="expanded screenshot" />
+    </div>
+
+    <script>
+      class SlidePresentation {
+        constructor() {
+          this.slides = Array.from(document.querySelectorAll(".slide"));
+          this.progressBar = document.getElementById("progressBar");
+          this.navDotsContainer = document.getElementById("navDots");
+          this.lightbox = document.getElementById("lightbox");
+          this.lightboxImage = document.getElementById("lightboxImage");
+          this.lightboxClose = document.getElementById("lightboxClose");
+          this.currentSlide = 0;
+          this.isAnimating = false;
+          this.setupIntersectionObserver();
+          this.setupKeyboardNav();
+          this.setupWheelNav();
+          this.setupTouchNav();
+          this.setupNavDots();
+          this.setupLightbox();
+          this.updateProgressBar();
+        }
+
+        setupIntersectionObserver() {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("visible");
+                  const index = this.slides.indexOf(entry.target);
+                  if (index >= 0) {
+                    this.currentSlide = index;
+                    this.updateProgressBar();
+                    this.updateNavDots();
+                  }
+                }
+              });
+            },
+            { threshold: 0.52 }
+          );
+
+          this.slides.forEach((slide) => observer.observe(slide));
+        }
+
+        scrollToSlide(index) {
+          const safeIndex = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.slides[safeIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        setupKeyboardNav() {
+          window.addEventListener("keydown", (event) => {
+            if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(event.key)) {
+              event.preventDefault();
+              this.scrollToSlide(this.currentSlide + 1);
+            }
+            if (["ArrowUp", "ArrowLeft", "PageUp"].includes(event.key)) {
+              event.preventDefault();
+              this.scrollToSlide(this.currentSlide - 1);
+            }
+            if (event.key === "Home") {
+              event.preventDefault();
+              this.scrollToSlide(0);
+            }
+            if (event.key === "End") {
+              event.preventDefault();
+              this.scrollToSlide(this.slides.length - 1);
+            }
+          });
+        }
+
+        setupWheelNav() {
+          let lastScrollTime = 0;
+          window.addEventListener(
+            "wheel",
+            (event) => {
+              const now = Date.now();
+              if (now - lastScrollTime < 900) return;
+              if (Math.abs(event.deltaY) < 40) return;
+              lastScrollTime = now;
+              if (event.deltaY > 0) {
+                this.scrollToSlide(this.currentSlide + 1);
+              } else {
+                this.scrollToSlide(this.currentSlide - 1);
+              }
+            },
+            { passive: true }
+          );
+        }
+
+        setupTouchNav() {
+          let touchStartY = 0;
+          let touchEndY = 0;
+
+          window.addEventListener(
+            "touchstart",
+            (event) => {
+              touchStartY = event.changedTouches[0].screenY;
+            },
+            { passive: true }
+          );
+
+          window.addEventListener(
+            "touchend",
+            (event) => {
+              touchEndY = event.changedTouches[0].screenY;
+              const delta = touchStartY - touchEndY;
+              if (Math.abs(delta) < 40) return;
+              if (delta > 0) {
+                this.scrollToSlide(this.currentSlide + 1);
+              } else {
+                this.scrollToSlide(this.currentSlide - 1);
+              }
+            },
+            { passive: true }
+          );
+        }
+
+        setupNavDots() {
+          this.navDotsContainer.innerHTML = "";
+          this.slides.forEach((slide, index) => {
+            const dot = document.createElement("button");
+            dot.className = "nav-dot";
+            dot.setAttribute("aria-label", `Go to slide ${index + 1}`);
+            dot.addEventListener("click", () => this.scrollToSlide(index));
+            this.navDotsContainer.appendChild(dot);
+          });
+          this.updateNavDots();
+        }
+
+        updateNavDots() {
+          const dots = Array.from(this.navDotsContainer.children);
+          dots.forEach((dot, index) => {
+            dot.classList.toggle("active", index === this.currentSlide);
+          });
+        }
+
+        updateProgressBar() {
+          const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+          this.progressBar.style.width = `${progress}%`;
+        }
+
+        setupLightbox() {
+          const zoomables = Array.from(document.querySelectorAll(".zoomable"));
+          zoomables.forEach((img) => {
+            img.addEventListener("click", () => {
+              this.lightboxImage.src = img.src;
+              this.lightboxImage.alt = img.alt;
+              this.lightbox.classList.add("open");
+            });
+          });
+
+          const close = () => {
+            this.lightbox.classList.remove("open");
+            this.lightboxImage.src = "";
+          };
+
+          this.lightboxClose.addEventListener("click", close);
+          this.lightbox.addEventListener("click", (event) => {
+            if (event.target === this.lightbox) close();
+          });
+
+          window.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && this.lightbox.classList.contains("open")) {
+              close();
+            }
+          });
+        }
+      }
+
+      new SlidePresentation();
+    </script>
+  </body>
+</html>
