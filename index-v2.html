@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 编程工具实战分享</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: var(--font-body);
+        background:
+          radial-gradient(circle at top left, rgba(255, 138, 101, 0.14), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(67, 97, 238, 0.14), transparent 32%),
+          linear-gradient(135deg, #2d2a26 0%, #1f1b18 45%, #2f2b27 100%);
+        color: var(--text-primary);
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body.help-open {
+        overflow: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: clamp(42px, 6vw, 84px) clamp(42px, 6vw, 84px);
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.35;
+      }
+
+      body::after {
+        content: none;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: linear-gradient(to top, rgba(247, 242, 234, 0.3), transparent);
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0.4;
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding-top) var(--slide-padding-x) var(--slide-padding-bottom);
+        position: relative;
+        z-index: 1;
+        width: min(95vw, 1500px);
+        margin: clamp(0.8rem, 1.8vw, 1.4rem) auto;
+        background: linear-gradient(180deg, rgba(252, 248, 241, 0.98) 0%, rgba(247, 242, 234, 0.96) 100%);
+        border-radius: 34px;
+        box-shadow:
+          0 30px 80px rgba(0, 0, 0, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(85, 65, 46, 0.12);
+      }
+
+      /* ===== Design Tokens ===== */
+      :root {
+        /* 背景色 */
+        --bg-primary: #f7f2ea;
+        --bg-secondary: #efe7da;
+        --panel-bg: rgba(255, 251, 245, 0.92);
+        --panel-strong: rgba(255, 248, 240, 0.98);
+
+        /* 文字色 */
+        --text-primary: #211c17;
+        --text-secondary: #6f6559;
+
+        /* 主题色 - 系统化配色 */
+        --primary: #4361ee;
+        --primary-glow: rgba(67, 97, 238, 0.24);
+
+        /* 强调色 */
+        --accent: #ff6b35;
+        --accent-2: #2aa876;
+        --accent-glow: rgba(255, 107, 53, 0.22);
+
+        /* 语义色 */
+        --success: #2aa876;
+        --success-glow: rgba(42, 168, 118, 0.18);
+        --danger: #dc5d51;
+        --danger-glow: rgba(220, 93, 81, 0.18);
+        --warning: #d89313;
+        --warning-glow: rgba(216, 147, 19, 0.18);
+
+        /* 边框和阴影 */
+        --border: rgba(33, 28, 23, 0.08);
+        --border-accent: rgba(255, 107, 53, 0.22);
+        --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18);
+
+        /* 字体 */
+        --font-display: "Bricolage Grotesque", "Noto Sans SC", sans-serif;
+        --font-body: "Noto Sans SC", "PingFang SC", sans-serif;
+        --font-mono: "IBM Plex Mono", monospace;
+
+        /* 字号系统 */
+        --title-size: clamp(2rem, 5.5vw, 5rem);
+        --h2-size: clamp(1.4rem, 3.2vw, 2.8rem);
+        --h3-size: clamp(1.1rem, 2.2vw, 1.5rem);
+        --body-size: clamp(0.9rem, 1.3vw, 1.1rem);
+        --small-size: clamp(0.7rem, 1vw, 0.875rem);
+        --micro-size: clamp(0.6rem, 0.85vw, 0.75rem);
+
+        /* 间距系统 */
+        --slide-padding-top: clamp(1.25rem, 3.2vw, 3rem);
+        --slide-padding-bottom: clamp(1.3rem, 3.6vw, 3.2rem);
+        --slide-padding-x: clamp(1.2rem, 4.5vw, 5rem);
+        --content-gap: clamp(0.85rem, 1.5vw, 1.5rem);
+        --element-gap: clamp(0.4rem, 0.9vw, 0.85rem);
+
+        /* 动画 */
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        --duration-normal: 0.7s;
+        --duration-fast: 0.3s;
+
+        /* 圆角系统 */
+        --radius-sm: 12px;
+        --radius-md: 18px;
+        --radius-lg: 24px;
+        --radius-xl: 32px;
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+      }
+
+      img,
+      .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+      }
+
+      @media (max-height: 700px) {
+        :root {
+          --slide-padding-top: clamp(0.85rem, 2.2vw, 1.5rem);
+          --slide-padding-bottom: clamp(0.9rem, 2.4vw, 1.6rem);
+          --slide-padding-x: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.45rem, 1.2vw, 0.9rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+          --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+      }
+
+      @media (max-height: 600px) {
+        :root {
+          --slide-padding-top: clamp(0.6rem, 1.8vw, 1rem);
+          --slide-padding-bottom: clamp(0.65rem, 1.9vw, 1.05rem);
+          --slide-padding-x: clamp(0.5rem, 2.5vw, 1.5rem);
+          --content-gap: clamp(0.3rem, 0.9vw, 0.7rem);
+          --title-size: clamp(1.1rem, 4vw, 2rem);
+          --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+
+        .nav-dots,
+        .keyboard-hint,
+        .decorative {
+          display: none;
+        }
+      }
+
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding-top: clamp(0.45rem, 1.5vw, 0.8rem);
+          --slide-padding-bottom: clamp(0.45rem, 1.5vw, 0.8rem);
+          --slide-padding-x: clamp(0.4rem, 2vw, 1rem);
+          --title-size: clamp(1rem, 3.5vw, 1.5rem);
+          --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+          --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .two-col,
+        .hero-grid,
+        .split-grid,
+        .case-grid,
+        .tool-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .cover-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .metric-row {
+          grid-template-columns: 1fr !important;
+        }
+
+        .workflow-line {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .workflow-arrow {
+          transform: rotate(90deg);
+          justify-content: center;
+          padding: 0.5rem 0;
+        }
+
+        .flow-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .flow-connector {
+          text-align: center;
+          transform: rotate(90deg);
+        }
+
+        .flow-connector-down {
+          transform: rotate(0deg);
+        }
+
+        .flow-node {
+          min-width: 0;
+        }
+
+        .retro-table th,
+        .retro-table td {
+          padding: 0.5rem 0.6rem;
+          font-size: var(--small-size);
+        }
+
+        .hero-metric-amount {
+          font-size: clamp(2.5rem, 10vw, 4rem);
+        }
+
+        .roadmap-item {
+          flex-wrap: wrap;
+        }
+
+        .roadmap-time {
+          margin-left: auto;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .cover-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .nav-dots {
+          display: none;
+        }
+
+        .flow-legend {
+          flex-wrap: wrap;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ===== Progress Bar ===== */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0;
+        background: linear-gradient(90deg, var(--accent), var(--primary), var(--accent));
+        background-size: 200% 100%;
+        animation: gradient-shift 3s ease infinite;
+        z-index: 1000;
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      @keyframes gradient-shift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+
+      /* ===== Nav Dots ===== */
+      .nav-dots {
+        position: fixed;
+        right: clamp(12px, 2vw, 24px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(6px, 1vw, 10px);
+        z-index: 999;
+        padding: 8px 6px;
+        background: rgba(255, 249, 241, 0.76);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        border: 1px solid rgba(57, 42, 28, 0.06);
+      }
+
+      .nav-dot {
+        width: clamp(6px, 0.8vw, 10px);
+        height: clamp(6px, 0.8vw, 10px);
+        border-radius: 999px;
+        background: rgba(57, 42, 28, 0.12);
+        border: 1px solid rgba(57, 42, 28, 0.08);
+        transition: all var(--duration-fast) var(--ease-spring);
+        cursor: pointer;
+      }
+
+      .nav-dot:hover {
+        background: rgba(57, 42, 28, 0.24);
+        transform: scale(1.2);
+      }
+
+      .nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.3);
+        box-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      /* ===== Typography ===== */
+      .deck-label {
+        font-family: var(--font-mono);
+        font-size: var(--micro-size);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #7a5b43;
+        font-weight: 500;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.75);
+        border-radius: 6px;
+        border: 1px solid rgba(122, 91, 67, 0.14);
+      }
+
+      .slide-title {
+        font-family: var(--font-display);
+        font-size: var(--title-size);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        max-width: none;
+        width: min(75vw, 1400px);
+        text-wrap: balance;
+        font-weight: 800;
+        color: var(--text-primary);
+      }
+
+      .section-title {
+        font-size: var(--h2-size);
+        line-height: 1.2;
+        margin-bottom: 0;
+        max-width: none;
+        width: 100%;
+        text-wrap: balance;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .lede,
+      .body-text,
+      .bullet-list li,
+      .metric-copy,
+      .tool-copy,
+      .timeline-copy {
+        font-size: var(--body-size);
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+      }
+
+      .accent {
+        color: var(--accent);
+      }
+
+      .danger {
+        color: var(--danger);
+      }
+
+      /* ===== Reveal Animation ===== */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition:
+          opacity var(--duration-normal) var(--ease-out-expo),
+          transform var(--duration-normal) var(--ease-out-expo);
+      }
+
+      .slide.visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .slide.visible .reveal:nth-child(1) { transition-delay: 0.08s; }
+      .slide.visible .reveal:nth-child(2) { transition-delay: 0.16s; }
+      .slide.visible .reveal:nth-child(3) { transition-delay: 0.24s; }
+      .slide.visible .reveal:nth-child(4) { transition-delay: 0.32s; }
+      .slide.visible .reveal:nth-child(5) { transition-delay: 0.40s; }
+      .slide.visible .reveal:nth-child(6) { transition-delay: 0.48s; }
+
+      /* ===== Grid Layouts ===== */
+      .hero-grid,
+      .two-col,
+      .split-grid,
+      .case-grid,
+      .tool-grid {
+        display: grid;
+        gap: clamp(1.1rem, 1.9vw, 1.7rem);
+      }
+
+      .hero-grid {
+        grid-template-columns: 1.2fr 0.8fr;
+        align-items: center;
+      }
+
+      .two-col {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tool-grid,
+      .case-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: stretch;
+      }
+
+      /* ===== Cover Page ===== */
+      .cover-header {
+        width: 100%;
+        max-width: min(90vw, 1520px);
+      }
+
+      .cover-title {
+        width: min(86vw, 1480px);
+        max-width: none;
+      }
+
+      .cover-subtitle {
+        font-family: var(--font-mono);
+        font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+        color: #8c5b22;
+        letter-spacing: 0.05em;
+        padding: 0.5rem 0;
+        margin-top: 0.4rem;
+        border-top: 2px solid rgba(255, 107, 53, 0.2);
+        border-bottom: 2px solid rgba(255, 107, 53, 0.2);
+        display: inline-block;
+      }
+
+      .cover-summary {
+        max-width: 82ch;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        line-height: 1.7;
+        color: var(--text-secondary);
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        background: rgba(255, 255, 255, 0.62);
+        border-radius: 20px;
+        border-left: 4px solid var(--accent);
+      }
+
+      .cover-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(1.2rem, 2vw, 1.8rem);
+      }
+
+      .cover-card {
+        min-height: 0;
+        transition: transform 0.3s ease;
+      }
+
+      .cover-card:hover {
+        transform: translateY(-4px);
+      }
+
+      .cover-card-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: clamp(0.8rem, 1.2vw, 1.1rem);
+        margin-bottom: clamp(0.8rem, 1.1vw, 0.95rem);
+        font-size: clamp(1rem, 1.5vw, 1.3rem);
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .cover-card-role {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: #b55f1c;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .cover-card-copy {
+        font-size: var(--body-size);
+        line-height: 1.65;
+        color: var(--text-secondary);
+      }
+
+      /* ===== Panel ===== */
+      .panel {
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 20px 60px -15px rgba(58, 44, 28, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(14px);
+        transition: all var(--duration-normal) var(--ease-out-expo);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.28), transparent);
+        opacity: 0;
+        transition: opacity var(--duration-normal);
+      }
+
+      .panel:hover::before {
+        opacity: 1;
+      }
+
+      .panel:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          0 24px 60px -18px rgba(58, 44, 28, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.68);
+        border-color: var(--border-accent);
+      }
+
+      .panel.pad {
+        padding: clamp(1.2rem, 2vw, 1.8rem);
+      }
+
+      .status-pill {
+        padding: clamp(0.45rem, 0.75vw, 0.65rem) clamp(0.9rem, 1.2vw, 1.1rem);
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(42, 168, 118, 0.12) 0%, rgba(42, 168, 118, 0.04) 100%);
+        color: #256d52;
+        font-family: var(--font-mono);
+        font-size: var(--micro-size);
+        border: 1px solid rgba(42, 168, 118, 0.18);
+        letter-spacing: 0.04em;
+        font-weight: 500;
+        box-shadow: 0 0 20px rgba(42, 168, 118, 0.06);
+      }
+
+      /* ===== Lists ===== */
+      .hero-list,
+      .bullet-list,
+      .mini-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.9rem, 1.4vw, 1.2rem);
+      }
+
+      .hero-list li,
+      .bullet-list li,
+      .mini-list li {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 252, 246, 0.92) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: clamp(1rem, 1.4vw, 1.3rem) clamp(1.1rem, 1.6vw, 1.5rem);
+        line-height: 1.65;
+        transition: all var(--duration-fast) var(--ease-out-expo);
+        position: relative;
+      }
+
+      .hero-list li::before,
+      .bullet-list li::before {
+        content: "";
+        position: absolute;
+        left: clamp(0.6rem, 1vw, 1rem);
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 10px var(--accent-glow);
+        transition: all var(--duration-fast);
+      }
+
+      .hero-list li,
+      .bullet-list li {
+        padding-left: clamp(1.5rem, 2.2vw, 2.2rem);
+      }
+
+      .hero-list li:hover,
+      .bullet-list li:hover {
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.06) 0%, rgba(255, 107, 53, 0.02) 100%);
+        border-color: var(--border-accent);
+        transform: translateX(4px);
+      }
+
+      .hero-list li:hover::before,
+      .bullet-list li:hover::before {
+        transform: translateY(-50%) scale(1.3);
+        box-shadow: 0 0 16px var(--accent-glow);
+      }
+
+      .mini-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .tool-card {
+        display: grid;
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+      }
+
+      .code-snippet {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        background: linear-gradient(135deg, #2b2521 0%, #1f1b18 100%);
+        border: 1px solid rgba(181, 95, 28, 0.16);
+        border-radius: 18px;
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        overflow: hidden;
+        line-height: 1.7;
+        color: #f5eadc;
+        position: relative;
+      }
+
+      .code-snippet::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 180, 120, 0.32), transparent);
+      }
+
+      /* ===== Screenshot Frame ===== */
+      .screenshot-frame {
+        background: var(--panel-strong);
+        border: 1px solid rgba(57, 42, 28, 0.08);
+        border-radius: 24px;
+        padding: clamp(1rem, 1.5vw, 1.4rem);
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease;
+      }
+
+      .screenshot-frame img {
+        width: 100%;
+        border-radius: 16px;
+        max-height: min(45vh, 360px);
+        object-fit: contain;
+        background: rgba(102, 84, 64, 0.05);
+        cursor: zoom-in;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      .screenshot-frame img:hover {
+        transform: scale(1.02) translateY(-3px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+      }
+
+      .caption {
+        margin-top: clamp(0.9rem, 1.4vw, 1.2rem);
+        padding: 0 clamp(0.5rem, 1vw, 0.8rem);
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        line-height: 1.6;
+        border-left: 2px solid rgba(255, 107, 53, 0.25);
+        font-style: italic;
+      }
+
+      /* ===== Metrics ===== */
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+      }
+
+      .metric-box {
+        padding: clamp(1rem, 1.4vw, 1.3rem);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(57, 42, 28, 0.06);
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .metric-box:hover {
+        background: rgba(255, 255, 255, 0.82);
+        transform: translateY(-2px);
+      }
+
+      .metric-num {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+        color: #b55f1c;
+        margin-bottom: clamp(0.4rem, 0.7vw, 0.6rem);
+        letter-spacing: -0.02em;
+      }
+
+      /* ===== Hero Metric (big $404) ===== */
+      .hero-metric {
+        text-align: center;
+        padding: clamp(1.5rem, 2.5vw, 2.5rem);
+        background: linear-gradient(135deg, rgba(220, 93, 81, 0.08) 0%, rgba(220, 93, 81, 0.02) 100%);
+        border: 1px solid rgba(220, 93, 81, 0.14);
+        border-radius: var(--radius-xl);
+      }
+
+      .hero-metric-amount {
+        font-family: var(--font-mono);
+        font-size: clamp(3rem, 8vw, 5.5rem);
+        font-weight: 700;
+        color: #c9483c;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        text-shadow: 0 0 18px rgba(201, 72, 60, 0.14);
+      }
+
+      .hero-metric-label {
+        font-size: clamp(1rem, 1.5vw, 1.3rem);
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-top: 0.5rem;
+      }
+
+      .hero-metric-detail {
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        margin-top: 0.3rem;
+      }
+
+      .hero-metric-compare {
+        display: inline-block;
+        margin-top: 0.8rem;
+        padding: 0.4rem 1rem;
+        background: rgba(42, 168, 118, 0.08);
+        border: 1px solid rgba(42, 168, 118, 0.16);
+        border-radius: 10px;
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: #256d52;
+      }
+
+      /* ===== Timeline ===== */
+      .timeline {
+        display: grid;
+        gap: clamp(1rem, 1.5vw, 1.4rem);
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+        align-items: start;
+      }
+
+      .timeline-num {
+        width: clamp(2rem, 2.5vw, 2.4rem);
+        height: clamp(2rem, 2.5vw, 2.4rem);
+        border-radius: 999px;
+        background: rgba(124, 200, 255, 0.14);
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: clamp(0.85rem, 1.1vw, 1rem);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(124, 200, 255, 0.2);
+      }
+
+      /* ===== Workflow ===== */
+      .workflow-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: clamp(0.9rem, 1.5vw, 1.25rem);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .workflow-node {
+        padding: clamp(0.85rem, 1.2vw, 1.1rem) clamp(1.1rem, 1.6vw, 1.4rem);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        font-size: var(--body-size);
+        line-height: 1.5;
+        white-space: nowrap;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .workflow-node:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+      }
+
+      .workflow-arrow {
+        display: flex;
+        align-items: center;
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        opacity: 0.7;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .workflow-arrow:hover {
+        opacity: 1;
+        transform: translateX(3px);
+      }
+
+      /* ===== Flow Diagram (visual flow chart) ===== */
+      .flow-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .flow-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(0.5rem, 1vw, 0.8rem);
+        flex-wrap: wrap;
+      }
+
+      .flow-node {
+        padding: clamp(0.7rem, 1vw, 1rem) clamp(0.9rem, 1.3vw, 1.2rem);
+        border-radius: 16px;
+        text-align: center;
+        min-width: clamp(90px, 13vw, 150px);
+        transition: transform 0.2s ease;
+      }
+
+      .flow-node:hover {
+        transform: translateY(-2px);
+      }
+
+      .flow-node-title {
+        display: block;
+        font-weight: 600;
+        font-size: var(--body-size);
+      }
+
+      .flow-node-sub {
+        display: block;
+        font-size: var(--small-size);
+        opacity: 0.7;
+        margin-top: 0.2rem;
+      }
+
+      .flow-node.role-human {
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        color: #7dd3fc;
+      }
+
+      .flow-node.role-cc {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        color: #a5b4fc;
+      }
+
+      .flow-node.role-cx {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #6ee7b7;
+      }
+
+      .flow-connector {
+        color: var(--text-secondary);
+        font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+        opacity: 0.5;
+        font-family: var(--font-mono);
+      }
+
+      .flow-connector-down {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        opacity: 0.5;
+        font-family: var(--font-mono);
+        padding: 0.2rem 0;
+      }
+
+      .flow-legend {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 0.8rem;
+      }
+
+      .legend-item {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        padding: 3px 10px;
+        border-radius: 6px;
+      }
+
+      .legend-human {
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        color: #7dd3fc;
+      }
+
+      .legend-cc {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        color: #a5b4fc;
+      }
+
+      .legend-cx {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #6ee7b7;
+      }
+
+      /* ===== Roadmap ===== */
+      .roadmap-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.8rem, 1.2vw, 1rem);
+      }
+
+      .roadmap-item {
+        display: flex;
+        align-items: center;
+        gap: clamp(1rem, 1.5vw, 1.3rem);
+        padding: clamp(0.8rem, 1.2vw, 1.1rem) clamp(1rem, 1.5vw, 1.3rem);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid var(--border);
+        transition: all var(--duration-fast) var(--ease-out-expo);
+      }
+
+      .roadmap-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--border-accent);
+        transform: translateX(6px);
+      }
+
+      .roadmap-num {
+        font-size: clamp(1.2rem, 2vw, 1.6rem);
+        min-width: 2rem;
+      }
+
+      .roadmap-content {
+        flex: 1;
+      }
+
+      .roadmap-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: var(--body-size);
+      }
+
+      .roadmap-desc {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        margin-top: 0.15rem;
+      }
+
+      .roadmap-time {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--accent);
+        padding: 4px 10px;
+        background: rgba(56, 189, 248, 0.08);
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+
+      /* ===== Decision Progress ===== */
+      .decision-progress {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-top: 0.4rem;
+      }
+
+      .dp-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all var(--duration-fast);
+      }
+
+      .dp-dot.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 0 10px var(--accent-glow);
+        transform: scale(1.2);
+      }
+
+      /* ===== Retro Table ===== */
+      .retro-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .retro-table th {
+        text-align: left;
+        padding: 0.7rem 0.9rem;
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--border-accent);
+        font-weight: 600;
+      }
+
+      .retro-table th:nth-child(1) { color: var(--danger); }
+      .retro-table th:nth-child(2) { color: var(--warning); }
+      .retro-table th:nth-child(3) { color: var(--success); }
+
+      .retro-table td {
+        padding: 0.6rem 0.9rem;
+        font-size: var(--body-size);
+        line-height: 1.5;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      .retro-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .retro-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .retro-cell-problem {
+        color: var(--danger);
+        font-weight: 500;
+      }
+
+      .retro-cell-cause {
+        color: var(--warning);
+      }
+
+      .retro-cell-action {
+        color: var(--success);
+        font-weight: 500;
+      }
+
+      /* ===== Takeaway ===== */
+      .takeaway-list {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.8rem, 1.2vw, 1rem);
+      }
+
+      .takeaway-item {
+        display: flex;
+        gap: clamp(0.8rem, 1.2vw, 1rem);
+        padding: clamp(0.8rem, 1.2vw, 1.1rem) clamp(1rem, 1.5vw, 1.3rem);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid var(--border);
+        align-items: flex-start;
+        transition: all var(--duration-fast) var(--ease-out-expo);
+      }
+
+      .takeaway-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--border-accent);
+        transform: translateX(6px);
+      }
+
+      .takeaway-num {
+        font-family: var(--font-mono);
+        font-size: clamp(1.3rem, 2vw, 1.8rem);
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+        min-width: 2rem;
+      }
+
+      .takeaway-title {
+        font-weight: 600;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        color: var(--text-primary);
+      }
+
+      .takeaway-desc {
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        margin-top: 0.15rem;
+      }
+
+      .takeaway-footer {
+        margin-top: clamp(1rem, 1.5vw, 1.3rem);
+        padding: clamp(0.8rem, 1.2vw, 1rem) clamp(1rem, 1.5vw, 1.2rem);
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: var(--radius-md);
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* ===== Structural Helpers ===== */
+      .footer-note {
+        position: absolute;
+        bottom: clamp(0.55rem, 1vw, 0.95rem);
+        left: var(--slide-padding-x);
+        right: var(--slide-padding-x);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--small-size);
+        color: rgba(96, 82, 66, 0.78);
+        font-family: var(--font-mono);
+        letter-spacing: 0.02em;
+      }
+
+      .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.2rem, 2vw, 1.8rem);
+        height: 100%;
+      }
+
+      .slide.compact .slide-content {
+        padding-bottom: clamp(2.4rem, 4vw, 3rem);
+      }
+
+      .slide.compact .page-shell {
+        gap: clamp(0.7rem, 1vw, 1rem);
+      }
+
+      .slide.compact .content-zone {
+        gap: clamp(0.65rem, 0.9vw, 0.85rem);
+      }
+
+      .slide.compact .panel.pad {
+        padding: clamp(0.8rem, 1vw, 0.95rem);
+      }
+
+      .slide.compact .bullet-list,
+      .slide.compact .hero-list,
+      .slide.compact .mini-list {
+        gap: clamp(0.4rem, 0.55vw, 0.55rem);
+      }
+
+      .slide.compact .bullet-list li,
+      .slide.compact .hero-list li,
+      .slide.compact .mini-list li {
+        padding-top: 0.72rem;
+        padding-bottom: 0.72rem;
+        font-size: clamp(0.8rem, 0.95vw, 0.92rem);
+        line-height: 1.42;
+      }
+
+      .slide.compact .hero-metric {
+        padding: clamp(1rem, 1.4vw, 1.25rem);
+      }
+
+      .slide.compact .hero-metric-amount {
+        font-size: clamp(2.4rem, 5vw, 3.8rem);
+      }
+
+      .slide.compact .hero-metric-label {
+        font-size: clamp(0.95rem, 1.05vw, 1.02rem);
+      }
+
+      .slide.compact .hero-metric-detail,
+      .slide.compact .hero-metric-compare,
+      .slide.compact .caption {
+        font-size: clamp(0.76rem, 0.85vw, 0.86rem);
+      }
+
+      .slide.compact .screenshot-frame img {
+        max-height: min(27vh, 210px);
+      }
+
+      .hero-shell {
+        justify-content: center;
+      }
+
+      .eyebrow-row {
+        display: flex;
+        align-items: center;
+        gap: clamp(0.8rem, 1.2vw, 1.1rem);
+        flex-wrap: wrap;
+      }
+
+      .intro-stack {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.6rem, 1.1vw, 0.9rem);
+        align-content: start;
+        width: min(78vw, 1280px);
+        max-height: none;
+        overflow: visible;
+        margin-bottom: clamp(0.3rem, 0.9vw, 0.7rem);
+      }
+
+      .content-zone {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        gap: clamp(1.2rem, 1.8vw, 1.6rem);
+      }
+
+      .speaker-line {
+        font-size: clamp(0.95rem, 1.2vw, 1.06rem);
+        color: #5f564b;
+        line-height: 1.58;
+        max-width: 72ch;
+      }
+
+      .title-wide {
+        width: min(82vw, 1380px);
+      }
+
+      .point-label {
+        display: inline-flex;
+        align-items: center;
+        gap: clamp(0.6rem, 0.9vw, 0.85rem);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #256d52;
+        font-weight: 600;
+        padding: 8px 14px;
+        background: rgba(42, 168, 118, 0.08);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid #2aa876;
+      }
+
+      .point-label::before {
+        content: none;
+      }
+
+      /* ===== Lightbox ===== */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 8, 18, 0.88);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 2000;
+      }
+
+      .lightbox.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .lightbox img {
+        width: auto;
+        max-width: min(92vw, 1600px);
+        max-height: 88vh;
+        border-radius: 18px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.56);
+        background: #0b1020;
+      }
+
+      .lightbox-close {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.2rem;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+        font-size: 1.35rem;
+        cursor: pointer;
+      }
+
+      /* ===== Slide Counter ===== */
+      .slide-counter {
+        position: fixed;
+        bottom: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(43, 37, 33, 0.88);
+        backdrop-filter: blur(12px);
+        padding: 6px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.08);
+        font-family: var(--font-mono);
+        font-size: var(--micro-size);
+        color: #f4ebdf;
+        z-index: 998;
+        letter-spacing: 0.1em;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
+      }
+
+      /* ===== Control Bar ===== */
+      .control-bar {
+        position: fixed;
+        bottom: 0.75rem;
+        right: clamp(60px, 8vw, 120px);
+        display: flex;
+        gap: 6px;
+        z-index: 998;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(8px);
+        transition: opacity .2s ease, transform .2s ease;
+      }
+
+      .control-btn {
+        background: rgba(43, 37, 33, 0.88);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 8px 12px;
+        color: #f4ebdf;
+        cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-out-expo);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: var(--micro-size);
+      }
+
+      body.show-ui .slide-counter {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.show-ui .control-bar {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .ui-hotzone {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        width: 36vw;
+        height: 18vh;
+        z-index: 997;
+        background: transparent;
+      }
+
+      .control-btn:hover {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: var(--border-accent);
+        color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .control-btn.active {
+        background: rgba(56, 189, 248, 0.2);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .control-icon {
+        font-size: 14px;
+      }
+
+      .control-text {
+        display: none;
+      }
+
+      @media (min-width: 768px) {
+        .control-text {
+          display: inline;
+        }
+      }
+
+      /* ===== Keyboard Hint ===== */
+      .keyboard-hint {
+        position: fixed;
+        bottom: 5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(11, 16, 32, 0.9);
+        backdrop-filter: blur(12px);
+        padding: 12px 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: var(--micro-size);
+        color: var(--text-secondary);
+        z-index: 997;
+        opacity: 1;
+        transition: opacity 0.5s ease;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .keyboard-hint.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .keyboard-hint kbd {
+        background: rgba(56, 189, 248, 0.15);
+        border: 1px solid var(--border-accent);
+        border-radius: 6px;
+        padding: 4px 10px;
+        color: var(--accent);
+        font-family: var(--font-mono);
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-5px); }
+      }
+
+      /* ===== Help Panel ===== */
+      .help-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: rgba(17, 24, 39, 0.98);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: 0;
+        min-width: 320px;
+        max-width: 90vw;
+        z-index: 2001;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s var(--ease-out-expo);
+        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5);
+      }
+
+      .help-panel.open {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .help-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: var(--body-size);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .help-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+
+      .help-close:hover {
+        color: var(--text-primary);
+      }
+
+      .help-list {
+        padding: 1rem 1.5rem;
+      }
+
+      .help-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.6rem 0;
+        font-size: var(--body-size);
+        color: var(--text-secondary);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      }
+
+      .help-item:last-child {
+        border-bottom: none;
+      }
+
+      .help-item kbd {
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid var(--border-accent);
+        border-radius: 6px;
+        padding: 3px 10px;
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        min-width: 28px;
+        text-align: center;
+      }
+
+      .help-footer {
+        padding: 0.75rem 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+        text-align: center;
+        font-style: italic;
+      }
+
+      .help-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 8, 18, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .help-overlay.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* ===== Targeted Slide Fixes ===== */
+      .slide-05 .page-shell,
+      .slide-09 .page-shell,
+      .slide-11 .page-shell,
+      .slide-14 .page-shell {
+        gap: clamp(0.8rem, 1.1vw, 1rem);
+      }
+
+      .slide-05 .hero-grid,
+      .slide-09 .two-col,
+      .slide-11 .two-col,
+      .slide-11 .tool-grid,
+      .slide-14 .cover-grid {
+        gap: clamp(0.8rem, 1.1vw, 1rem);
+      }
+
+      .slide-05 .panel.pad,
+      .slide-09 .panel.pad,
+      .slide-11 .panel.pad,
+      .slide-14 .panel.pad {
+        padding: clamp(0.9rem, 1.15vw, 1.05rem);
+      }
+
+      .slide-05 .bullet-list,
+      .slide-09 .bullet-list,
+      .slide-11 .bullet-list {
+        gap: clamp(0.38rem, 0.55vw, 0.55rem);
+      }
+
+      .slide-05 .bullet-list li,
+      .slide-09 .bullet-list li,
+      .slide-11 .bullet-list li {
+        padding-top: 0.66rem;
+        padding-bottom: 0.66rem;
+        font-size: clamp(0.78rem, 0.92vw, 0.9rem);
+        line-height: 1.42;
+      }
+
+      .slide-05 .page-shell > .section-title {
+        font-size: clamp(1.4rem, 2.55vw, 2rem);
+        line-height: 1.16;
+      }
+
+      .slide-05 .speaker-line {
+        margin-top: 0.55rem !important;
+      }
+
+      .slide-09 .page-shell > .section-title {
+        font-size: clamp(1.7rem, 4.2vw, 4rem);
+        line-height: 1.06;
+      }
+
+      .slide-09 .takeaway-footer {
+        margin-top: 0;
+        padding: 0.75rem 1rem;
+        font-size: clamp(0.78rem, 0.92vw, 0.86rem);
+      }
+
+      .slide-11 .page-shell > .section-title {
+        font-size: clamp(1.22rem, 2.05vw, 1.8rem);
+        line-height: 1.18;
+      }
+
+      .slide-11 .screenshot-frame {
+        padding: clamp(0.72rem, 0.95vw, 0.85rem);
+      }
+
+      .slide-11 .screenshot-frame img {
+        max-height: min(18vh, 150px);
+      }
+
+      .slide-11 .caption {
+        margin-top: 0.55rem;
+        padding: 0 0.35rem 0 0.65rem;
+        font-size: clamp(0.72rem, 0.82vw, 0.8rem);
+        line-height: 1.45;
+      }
+
+      .slide-14 .intro-stack {
+        width: min(84vw, 1400px);
+        gap: clamp(0.45rem, 0.8vw, 0.72rem);
+        margin-bottom: clamp(0.18rem, 0.4vw, 0.35rem);
+      }
+
+      .slide-14 .slide-title {
+        font-size: clamp(2.1rem, 4.5vw, 4rem);
+        line-height: 1.03;
+        width: min(84vw, 1320px);
+      }
+
+      .slide-14 .cover-summary {
+        max-width: 76ch;
+        padding: clamp(0.85rem, 1.1vw, 1rem);
+        font-size: clamp(0.86rem, 1vw, 0.98rem);
+      }
+
+      .slide-14 .cover-card-copy {
+        line-height: 1.52;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar"></div>
+    <nav class="nav-dots"></nav>
+    <div class="ui-hotzone" id="uiHotzone"></div>
+    <div class="slide-counter"><span id="currentSlide">01</span> / <span id="totalSlides">14</span></div>
+    <div class="control-bar">
+      <button class="control-btn" id="helpBtn">帮助</button>
+      <button class="control-btn" id="autoPlayBtn">自动播放</button>
+    </div>
+
+    <div class="lightbox" id="lightbox">
+      <button class="lightbox-close" id="lightboxClose">×</button>
+      <img id="lightboxImage" alt="Preview" />
+    </div>
+
+    <div class="help-overlay" id="helpOverlay" aria-hidden="true"></div>
+    <aside class="help-panel" id="helpPanel" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="help-header">
+        <strong id="helpTitle">如何看这套分享</strong>
+        <button class="help-close" id="helpClose" aria-label="关闭帮助">×</button>
+      </div>
+      <div class="help-list">
+        <div class="help-item"><kbd>←</kbd><span>上一页</span></div>
+        <div class="help-item"><kbd>→</kbd><span>下一页</span></div>
+        <div class="help-item"><kbd>空格</kbd><span>继续翻页</span></div>
+        <div class="help-item"><kbd>A</kbd><span>打开/关闭自动播放</span></div>
+        <div class="help-item"><kbd>?</kbd><span>打开/关闭帮助</span></div>
+        <div class="help-item"><kbd>Esc</kbd><span>关闭帮助或图片放大层</span></div>
+        <div class="help-item"><span>点击截图可放大，点击遮罩可关闭。</span></div>
+      </div>
+      <div class="help-footer">这套分享更像一张地图：先判断自己在哪一层，再决定该不该冲下一层。</div>
+    </aside>
+
+    <section class="slide visible">
+      <div class="slide-content">
+        <div class="page-shell hero-shell">
+          <div class="eyebrow-row reveal">
+            <span class="deck-label">AI 交流局 / 分享 V2</span>
+            <span class="status-pill">面向老板 + 程序员 + 小白</span>
+          </div>
+          <div class="intro-stack">
+            <h1 class="slide-title cover-title reveal">AI 编程不是魔法，<br>它更像一条从玩具到员工的升级路</h1>
+            <div class="cover-subtitle reveal">从“随便玩玩”到“真的能交付”，中间差的不是模型，而是方法</div>
+            <p class="cover-summary reveal">这套不是工具说明书，也不是术语大会。我想用更人话的方式，讲清楚 AI 编程为什么一边让人兴奋，一边让人崩溃；以及普通人到底该怎么一阶一阶用起来，而不是一上来就把自己交给“全自动”。</p>
+          </div>
+          <div class="cover-grid reveal">
+            <article class="panel pad cover-card">
+              <div class="cover-card-title"><span>六个阶段</span><span class="cover-card-role">0 → 5</span></div>
+              <p class="cover-card-copy">从“输入一句话生成贪吃蛇”，一路讲到“像养 AI 员工一样管理系统”。</p>
+            </article>
+            <article class="panel pad cover-card">
+              <div class="cover-card-title"><span>我的判断</span><span class="cover-card-role">人话版</span></div>
+              <p class="cover-card-copy">AI 不是神仙，更像一个很猛、但很会擅自发挥的实习生。</p>
+            </article>
+            <article class="panel pad cover-card">
+              <div class="cover-card-title"><span>真实案例</span><span class="cover-card-role">qclaw / WorkBuddy</span></div>
+              <p class="cover-card-copy">不讲空架构图，只讲我自己折腾过、踩过坑、跑通过的东西。</p>
+            </article>
+            <article class="panel pad cover-card">
+              <div class="cover-card-title"><span>带走的东西</span><span class="cover-card-role">明天就能用</span></div>
+              <p class="cover-card-copy">你明天就能拿去试的学习路径、沟通方法和协作套路。</p>
+            </article>
+          </div>
+          <div class="footer-note"><span>01 / Cover</span><span>先别急着上全自动，先搞懂你在哪一层</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact slide-05">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 02</span><span class="point-label">为什么很多人又爱又骂 AI 编程</span></div>
+          <h2 class="section-title reveal">因为大多数人拿到的是“答案生成器”，<br>但真正要用的是“任务执行系统”</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">常见幻觉</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>“我都用上最强模型了，为什么项目还是做不出来？”</li>
+                <li>“它明明刚才很聪明，为什么下一轮又开始胡说？”</li>
+                <li>“别人说 AI 已经能替代程序员了，怎么我还在修 prompt？”</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">我现在的理解</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>大部分争议，不是因为 AI 不强，而是因为你给它的角色不清楚。</li>
+                <li>你让它当“搜索框”，它就只能给你答案；你让它当“执行位”，你就得给任务、边界和验收。</li>
+                <li>很多人不是不会用 AI，而是直接跳过了学习曲线，想一步跳到“全自动公司”。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="takeaway-footer reveal">一句话：AI 编程今天最大的问题，不是模型不够强，而是用户脑子里还没有“分阶段使用”的地图。</div>
+          <div class="footer-note"><span>02 / Why</span><span>大家骂的往往不是 AI，本质上是在骂错误期待</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact slide-09">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 03</span><span class="status-pill">六阶段总览</span></div>
+          <h2 class="section-title reveal">我把 AI 编程大致分成 6 个阶段</h2>
+          <p class="speaker-line reveal" style="color:#6a5d50;font-weight:500">这不是官方标准，更像我自己踩坑后总结出来的一张“驾驶证地图”：你现在在哪一档，决定了你应该怎么学、怎么配工具、怎么管成本。</p>
+          <div class="panel pad reveal" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+            <div class="metric-box"><span class="metric-num">0️⃣ 玩具阶段</span><div class="metric-copy">一句话生成小游戏、小游戏 demo，最容易爽，最不容易落地。</div></div>
+            <div class="metric-box"><span class="metric-num">1️⃣ 工具阶段</span><div class="metric-copy">Cursor 这类一体化 IDE，开始能做商业产品，但大项目会丢上下文。</div></div>
+            <div class="metric-box"><span class="metric-num">2️⃣ 副驾阶段</span><div class="metric-copy">VS Code + 插件协作，像有个副驾驶一直帮你看地图。</div></div>
+            <div class="metric-box"><span class="metric-num">3️⃣ 搭档阶段</span><div class="metric-copy">CLI 工具开始接管整段流程，但还是要你手动发车。</div></div>
+            <div class="metric-box"><span class="metric-num">4️⃣ 实习生阶段</span><div class="metric-copy">你开始用业务语言下任务，AI 直接产出 PPT、分析、代码等结果。</div></div>
+            <div class="metric-box"><span class="metric-num">5️⃣ 全职员工阶段</span><div class="metric-copy">自动触发、自动巡检、自动派活，像在带一支 AI 团队，但管理成本也飞升。</div></div>
+          </div>
+          <div class="footer-note"><span>03 / Stages</span><span>不是谁先用到 5 阶最厉害，而是谁知道自己当前适合第几阶</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 04</span><span class="point-label">0️⃣-1️⃣ 最容易上头的阶段</span></div>
+          <h2 class="section-title reveal">玩具阶段和工具阶段，为什么最容易让人误判 AI 能力？</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">0️⃣ 玩具阶段</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>输入一句话，它立刻给你一个能跑的小 demo，比如贪吃蛇、小网页、小工具。</li>
+                <li>爽点非常强，因为 30 秒就能看到结果。</li>
+                <li>问题也非常明显：一旦复杂度上去，你会发现“看起来像成了”，其实只是个玩具。</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">1️⃣ 工具阶段</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>Cursor 这类工具就像手机摄影：直出就很好看，速度也快。</li>
+                <li>你开始能做真正的产品，不只是 demo。</li>
+                <li>但一旦项目大、文件多、上下文长，它就会像一个突然失忆的高手：刚才还很懂你，五分钟后开始自由发挥。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="takeaway-footer reveal">风趣一点说：前两阶段最像“AI 甜品区”——很好吃，但你不能拿甜品当主食。</div>
+          <div class="footer-note"><span>04 / Toy → Tool</span><span>能做出东西，不等于能稳定交付东西</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 05</span><span class="point-label">2️⃣-3️⃣ 开始真正像生产力</span></div>
+          <h2 class="section-title reveal">副驾阶段和搭档阶段，AI 才开始真正进入工作流</h2>
+          <div class="hero-grid content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">2️⃣ 副驾阶段</h3>
+              <p class="speaker-line" style="margin-top:10px">你还在开车，但旁边终于坐了个靠谱一点的副驾：帮你看地图、提醒你转弯、帮你查资料、帮你补上下文。</p>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>自由组合插件，工具链更稳。</li>
+                <li>比一体化 IDE 灵活，也更适合复杂项目。</li>
+                <li>缺点是你还是得盯着屏幕，AI 不能自己出去跑腿。</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">3️⃣ 搭档阶段</h3>
+              <p class="speaker-line" style="margin-top:10px">到 CLI 这一步，AI 更像一个你能叫得动的搭档：不只会聊天，还能动文件、跑脚本、读目录、交付结果。</p>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>你说“去看一下这个目录，帮我修 bug，再跑测试”，它能真去做。</li>
+                <li>但它还是不会自己醒来，所有任务都要你手动发起。</li>
+                <li>所以这是“能干活”，还不是“会自己上班”。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-note"><span>05 / Copilot → Partner</span><span>从“陪你干活”到“替你干一段活”，差别很大</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 06</span><span class="status-pill">4️⃣-5️⃣ 高级阶段</span></div>
+          <h2 class="section-title reveal" style="font-size:clamp(1.35rem,2.6vw,2.2rem)">实习生阶段和全职员工阶段，为什么不适合小白直接跳？</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal" style="min-height:0">
+              <h3 class="section-title" style="font-size:var(--h3-size)">4️⃣ 实习生阶段</h3>
+              <p class="speaker-line" style="margin-top:10px">你开始不用讲代码细节，而是讲业务目标，比如“帮我做一份分析 PPT”“帮我整理用户访谈”。这时候真正拉开差距的，不是会不会写 prompt，而是你懂不懂业务、懂不懂验收。</p>
+            </div>
+            <div class="panel pad reveal" style="min-height:0">
+              <h3 class="section-title" style="font-size:var(--h3-size)">5️⃣ 全职员工阶段</h3>
+              <p class="speaker-line" style="margin-top:10px">像 OpenClaw 这种自动触发、自动巡检、自动派活的系统，已经不只是工具，而像在带团队。好处是手动少了、速度快了；坏处是你如果不会管理，它会用很快的速度把错误也自动化。</p>
+            </div>
+          </div>
+          <div class="takeaway-footer reveal" style="margin-top:0">
+            <strong style="color:#c9483c;font-family:var(--font-mono);font-size:1.05em">$1000+</strong>
+            这类高级自动化，已经是专业级消耗量级。说人话：先学会开车，再碰自动驾驶，不然最先自动化的可能是你的翻车速度。
+          </div>
+          <div class="footer-note"><span>06 / Intern → Employee</span><span>高级阶段拼的已经不是提示词，而是管理能力</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 07</span><span class="point-label">我的核心类比</span></div>
+          <h2 class="section-title reveal">AI 不是万能工具，<br>而是一个能力很强但需要被管理的“实习生”</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">它像实习生的地方</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>做得快，学得快，态度还常常很好。</li>
+                <li>但会误解需求、脑补背景、擅自发挥，还会一本正经地把错事做完。</li>
+                <li>你要是不盯，它不是偷懒，它是“热情地做错”。</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">所以人类负责什么</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>负责目标：到底要解决什么问题。</li>
+                <li>负责边界：什么要做，什么不能做。</li>
+                <li>负责验收：做到什么程度才算完成。</li>
+                <li>负责后果：最终上线、交付、签字的人，永远不是 AI。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="takeaway-footer reveal">一句更扎心的话：AI 最大的危险，不是它太笨，而是它有时看起来太像真的懂了。</div>
+          <div class="footer-note"><span>07 / Intern Metaphor</span><span>你不是在“使用工具”，你是在“管理代理”</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 08</span><span class="status-pill">真正的分水岭</span></div>
+          <h2 class="section-title reveal">和 AI 协作的关键，不是聊天能力，<br>而是把模糊想法变成清晰任务</h2>
+          <div class="workflow-line reveal">
+            <div class="workflow-node">我要做个东西</div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-node">解决什么问题</div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-node">明确不做什么</div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-node">怎么才算完成</div>
+          </div>
+          <div class="metric-row reveal">
+            <div class="metric-box"><span class="metric-num">问题</span><div class="metric-copy">不是“帮我做个产品”，而是“帮我解决哪个具体麻烦”。</div></div>
+            <div class="metric-box"><span class="metric-num">限制</span><div class="metric-copy">时间、成本、平台、权限、数据边界，不说清楚就等着返工。</div></div>
+            <div class="metric-box"><span class="metric-num">验收</span><div class="metric-copy">没写完工标准，AI 就会默认“差不多就行”，而你通常不会满意。</div></div>
+          </div>
+          <div class="panel pad reveal">
+            <div class="code-snippet">坏需求：<br>“帮我做一个 AI 产品。”<br><br>好需求：<br>“帮我做一个面向 SEO 团队的小工具，输入 URL 后追踪 AI 搜索是否引用了我的内容。先做 Web MVP，不接 CRM，不做团队协作，7 天内要能给 3 个种子用户试用。”</div>
+          </div>
+          <div class="footer-note"><span>08 / Requirement</span><span>需求越具体，结果越可控；表达越含糊，返工越多</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 09</span><span class="point-label">保留第一版：tabbit 学习方法</span></div>
+          <h2 class="section-title reveal">别一口气冲终局，<br>tabbit 式学习更像“踩台阶”，不是“坐火箭”</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">我理解的 tabbit 方法</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>先从能立刻看见结果的小台阶开始，建立正反馈。</li>
+                <li>每上一层，只多学一种新能力：比如先学生成，再学协作，再学自动化。</li>
+                <li>不要因为别人晒“全自动 AI 公司”就觉得自己也得当天毕业。</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">为什么这方法重要</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>因为 AI 工具不是取消了驾照，而是换了车。</li>
+                <li>你如果连方向盘都没摸熟，就去开自动驾驶，最后往往不是省事，是翻车。</li>
+                <li>分阶段学习，才有机会把“惊艳一次”变成“稳定产出很多次”。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="takeaway-footer reveal">一句话：没人会因为你直接跳到第 5 阶，就多给你一张证书；但你很可能先多交几张账单。</div>
+          <div class="footer-note"><span>09 / Tabbit</span><span>学习 AI，不是比谁跳得快，而是比谁每一阶都站稳</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 10</span><span class="status-pill">我的工作流</span></div>
+          <h2 class="section-title reveal">我现在怎么放工具位置：<br>Manager、Worker、qclaw、WorkBuddy 各自站哪</h2>
+          <div class="flow-diagram reveal">
+            <div class="flow-row">
+              <div class="flow-node role-human"><span class="flow-node-title">人</span><span class="flow-node-sub">定目标 / 定边界</span></div>
+              <div class="flow-connector">→</div>
+              <div class="flow-node role-cc"><span class="flow-node-title">Manager</span><span class="flow-node-sub">拆任务 / 派工 / 收口</span></div>
+              <div class="flow-connector">→</div>
+              <div class="flow-node role-cx"><span class="flow-node-title">Worker</span><span class="flow-node-sub">执行 / 产出 / 回报</span></div>
+            </div>
+            <div class="flow-connector-down">↓</div>
+            <div class="flow-row">
+              <div class="flow-node role-human"><span class="flow-node-title">qclaw</span><span class="flow-node-sub">远程触发本地动作</span></div>
+              <div class="flow-connector">↔</div>
+              <div class="flow-node role-cc"><span class="flow-node-title">WorkBuddy</span><span class="flow-node-sub">桌面工作台 / 结果承接</span></div>
+            </div>
+          </div>
+          <div class="flow-legend reveal">
+            <span class="legend-item legend-human">人：判断和验收</span>
+            <span class="legend-item legend-cc">Manager：拆解和调度</span>
+            <span class="legend-item legend-cx">Worker：执行和落盘</span>
+          </div>
+          <div class="takeaway-footer reveal">核心思路不是“谁最强”，而是“谁该先上，谁该补位，谁该最后背锅”。</div>
+          <div class="footer-note"><span>10 / Workflow</span><span>AI 时代最像管理学，不像魔法课</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide compact slide-11">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 11</span><span class="point-label">qclaw vs WorkBuddy</span></div>
+          <h2 class="section-title reveal">一句话区别：qclaw 负责“远程叫活”，WorkBuddy 负责“桌面接活”</h2>
+          <div class="two-col content-zone">
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">qclaw 更像什么</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>你人在外面，也能通过微信把家里/办公室那台电脑叫起来干活。</li>
+                <li>优势是“远程触发”和“本地执行”。</li>
+                <li>适合文件、桌面任务、轻操作自动化这类场景。</li>
+              </ul>
+            </div>
+            <div class="panel pad reveal">
+              <h3 class="section-title" style="font-size:var(--h3-size)">WorkBuddy 更像什么</h3>
+              <ul class="bullet-list" style="margin-top:12px">
+                <li>它更像一个办公交付台，你把需求扔进去，它负责整理、展示、承接结果。</li>
+                <li>优势是“桌面交付”和“结果组织”。</li>
+                <li>适合办公流程、文档任务、产出查看这类场景。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="tool-grid content-zone">
+            <div class="screenshot-frame reveal">
+              <img class="zoomable" src="assets/qclaw-workbuddy-prompt.png" alt="qclaw 和 WorkBuddy 的桥接提示词截图" />
+              <p class="caption">这是我当时给 AI 的真实提示词，不是 PPT 上现编的架构图。</p>
+            </div>
+            <div class="screenshot-frame reveal">
+              <img class="zoomable" src="assets/qclaw-workbuddy-result.png" alt="qclaw 和 WorkBuddy 的桥接结果截图" />
+              <p class="caption">最后跑通的是最朴素也最稳的一条路：共享目录 + 定时轮询。</p>
+            </div>
+          </div>
+          <div class="footer-note"><span>11 / qclaw × WorkBuddy</span><span>先跑通一条土路，再谈高速公路</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 12</span><span class="status-pill">成本不是彩蛋</span></div>
+          <h2 class="section-title reveal" style="font-size:clamp(1.32rem,2.45vw,2.05rem)">为什么我越来越觉得：高级 AI 编程不是炫技题，而是管理题</h2>
+          <div class="hero-grid content-zone" style="align-items:start">
+            <div class="hero-metric reveal">
+              <div class="hero-metric-amount">$404</div>
+              <div class="hero-metric-label">一段失控长对话给我的提醒</div>
+              <div class="hero-metric-detail">不是花不起，而是它暴露了方法上的漏洞：边界不清、验收不明、上下文过长。</div>
+              <div class="hero-metric-compare">对比：第二梯队长期跑 ≈ $84</div>
+            </div>
+            <div class="screenshot-frame reveal" style="padding:0.85rem">
+              <img class="zoomable" src="assets/token-cost.png" alt="token 成本截图" />
+              <p class="caption">账单不是吓人的，它像体检报告：会把你工作流里不合理的地方照出来。</p>
+            </div>
+          </div>
+          <div class="panel pad reveal" style="margin-bottom:0.2rem">
+            <ul class="bullet-list">
+              <li>低阶段拼的是“会不会用”；高阶段拼的是“会不会控成本”。</li>
+              <li>AI 员工越多、自动化越深，越需要明确角色、边界和巡检机制。</li>
+              <li>真正的高级玩家，不一定最会写 prompt，但一定更会做管理。</li>
+            </ul>
+          </div>
+          <div class="footer-note"><span>12 / Cost & Control</span><span>别把账单看成惩罚，它其实是管理能力的镜子</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-content">
+        <div class="page-shell">
+          <div class="eyebrow-row reveal"><span class="deck-label">PAGE 13</span><span class="point-label">明天就能用的三条建议</span></div>
+          <h2 class="section-title reveal">如果你听完只想带走 3 件事，我建议是这三件</h2>
+          <div class="takeaway-list reveal">
+            <div class="takeaway-item"><div class="takeaway-num">1</div><div><div class="takeaway-title">别跳级</div><div class="takeaway-desc">先从你当前驾驭得住的一层开始。不会开车的人，别先研究自动驾驶公司怎么调度车队。</div></div></div>
+            <div class="takeaway-item"><div class="takeaway-num">2</div><div><div class="takeaway-title">学会写清楚任务</div><div class="takeaway-desc">说清问题、限制、不做什么、完成标准。你越清楚，AI 越像助手；你越模糊，AI 越像喜剧演员。</div></div></div>
+            <div class="takeaway-item"><div class="takeaway-num">3</div><div><div class="takeaway-title">把 AI 当团队成员，不要当许愿池</div><div class="takeaway-desc">会拆解、会派工、会验收、会复盘，才会越用越顺；否则就是一次次“它怎么又理解错了”。</div></div></div>
+          </div>
+          <div class="footer-note"><span>13 / Advice</span><span>把神话拆掉，AI 才会真正开始帮你做事</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide slide-14">
+      <div class="slide-content">
+        <div class="page-shell hero-shell">
+          <div class="eyebrow-row reveal">
+            <span class="deck-label">PAGE 14</span>
+            <span class="status-pill">Closing</span>
+          </div>
+          <div class="intro-stack">
+            <h2 class="slide-title title-wide reveal">AI 时代真正值钱的，<br>不是更会按按钮，<br>而是更会讲清问题、拆明需求、做出判断</h2>
+            <p class="cover-summary reveal">AI 可以提升执行效率，但它替代不了人的判断力。未来最重要的能力，不只是“会不会用工具”，而是“你能不能把问题讲清楚、把任务拆明白、把边界定准确”。这件事，老板、程序员、小白，其实都一样。</p>
+          </div>
+          <div class="cover-grid reveal">
+            <article class="panel pad cover-card"><div class="cover-card-title"><span>给老板</span><span class="cover-card-role">看组织能力</span></div><p class="cover-card-copy">别只问“AI 能不能替人”，先问“我们有没有能力管理它”。</p></article>
+            <article class="panel pad cover-card"><div class="cover-card-title"><span>给程序员</span><span class="cover-card-role">看工作流</span></div><p class="cover-card-copy">别只比模型，先把拆解、执行、验收这三段链路搭起来。</p></article>
+            <article class="panel pad cover-card"><div class="cover-card-title"><span>给小白</span><span class="cover-card-role">先上第一阶</span></div><p class="cover-card-copy">先从一个能看见结果的小任务开始，不用一上来就想着“AI 创业”。</p></article>
+            <article class="panel pad cover-card"><div class="cover-card-title"><span>给我自己</span><span class="cover-card-role">继续折腾</span></div><p class="cover-card-copy">保留好奇心，但别放弃判断力。AI 值得试，但更值得被管好。</p></article>
+          </div>
+          <div class="footer-note"><span>14 / Closing</span><span>谢谢，欢迎交流：别问哪家最强，先问自己现在在哪一层</span></div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      class SlidePresentation {
+        constructor() {
+          this.slides = document.querySelectorAll('.slide');
+          this.navDotsContainer = document.querySelector('.nav-dots');
+          this.progressBar = document.querySelector('.progress-bar');
+          this.currentSlideEl = document.getElementById('currentSlide');
+          this.totalSlidesEl = document.getElementById('totalSlides');
+          this.helpPanel = document.getElementById('helpPanel');
+          this.helpOverlay = document.getElementById('helpOverlay');
+          this.helpClose = document.getElementById('helpClose');
+          this.lightbox = document.getElementById('lightbox');
+          this.lightboxImage = document.getElementById('lightboxImage');
+          this.lightboxClose = document.getElementById('lightboxClose');
+          this.uiHotzone = document.getElementById('uiHotzone');
+          this.uiHideTimer = null;
+          this.currentSlide = 0;
+          this.isAutoPlay = false;
+          this.autoPlayInterval = null;
+          if (this.totalSlidesEl) this.totalSlidesEl.textContent = String(this.slides.length).padStart(2, '0');
+          this.setupIntersectionObserver();
+          this.setupKeyboardNav();
+          this.setupWheelNav();
+          this.setupProgressBar();
+          this.setupNavDots();
+          this.setupAutoPlay();
+          this.setupHelpPanel();
+          this.setupLightbox();
+          this.setupFloatingUI();
+        }
+        isHelpOpen() {
+          return Boolean(this.helpPanel && this.helpPanel.classList.contains('open'));
+        }
+        isLightboxOpen() {
+          return Boolean(this.lightbox && this.lightbox.classList.contains('open'));
+        }
+        openHelp() {
+          if (!this.helpPanel || !this.helpOverlay) return;
+          if (this.uiHideTimer) clearTimeout(this.uiHideTimer);
+          document.body.classList.add('show-ui', 'help-open');
+          this.helpPanel.classList.add('open');
+          this.helpOverlay.classList.add('open');
+          this.helpPanel.setAttribute('aria-hidden', 'false');
+          this.helpOverlay.setAttribute('aria-hidden', 'false');
+        }
+        closeHelp() {
+          if (!this.helpPanel || !this.helpOverlay) return;
+          document.body.classList.remove('help-open');
+          this.helpPanel.classList.remove('open');
+          this.helpOverlay.classList.remove('open');
+          this.helpPanel.setAttribute('aria-hidden', 'true');
+          this.helpOverlay.setAttribute('aria-hidden', 'true');
+        }
+        closeLightbox() {
+          if (!this.lightbox || !this.lightboxImage) return;
+          this.lightbox.classList.remove('open');
+          this.lightboxImage.src = '';
+        }
+        toggleHelp(forceState) {
+          const shouldOpen = typeof forceState === 'boolean' ? forceState : !this.isHelpOpen();
+          if (shouldOpen) {
+            this.openHelp();
+          } else {
+            this.closeHelp();
+          }
+        }
+        scrollToSlide(index) {
+          if (index < 0 || index >= this.slides.length) return;
+          this.currentSlide = index;
+          this.slides[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+          this.updateUI();
+        }
+        updateUI() {
+          if (this.currentSlideEl) this.currentSlideEl.textContent = String(this.currentSlide + 1).padStart(2, '0');
+          const dots = this.navDotsContainer ? this.navDotsContainer.querySelectorAll('.nav-dot') : [];
+          dots.forEach((dot, i) => dot.classList.toggle('active', i === this.currentSlide));
+          if (this.progressBar) {
+            const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+            this.progressBar.style.width = `${progress}%`;
+          }
+        }
+        setupIntersectionObserver() {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                this.currentSlide = Array.from(this.slides).indexOf(entry.target);
+                this.updateUI();
+              }
+            });
+          }, { threshold: 0.55 });
+          this.slides.forEach((slide) => observer.observe(slide));
+        }
+        setupKeyboardNav() {
+          window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+              if (this.isLightboxOpen()) this.closeLightbox();
+              if (this.isHelpOpen()) this.closeHelp();
+              return;
+            }
+            if (this.isHelpOpen() || this.isLightboxOpen()) {
+              if (event.key === '?') {
+                event.preventDefault();
+                this.toggleHelp();
+              }
+              return;
+            }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight' || event.key === ' ') {
+              event.preventDefault();
+              this.scrollToSlide(Math.min(this.currentSlide + 1, this.slides.length - 1));
+            }
+            if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+              event.preventDefault();
+              this.scrollToSlide(Math.max(this.currentSlide - 1, 0));
+            }
+            if (event.key === 'a' || event.key === 'A') this.toggleAutoPlay();
+            if (event.key === '?') this.toggleHelp();
+          });
+        }
+        setupWheelNav() {
+          let ticking = false;
+          window.addEventListener('wheel', (event) => {
+            if (this.isHelpOpen() || this.isLightboxOpen()) return;
+            if (ticking) return;
+            ticking = true;
+            setTimeout(() => (ticking = false), 700);
+            if (event.deltaY > 0) this.scrollToSlide(Math.min(this.currentSlide + 1, this.slides.length - 1));
+            if (event.deltaY < 0) this.scrollToSlide(Math.max(this.currentSlide - 1, 0));
+          }, { passive: true });
+        }
+        setupProgressBar() { this.updateUI(); }
+        setupNavDots() {
+          if (!this.navDotsContainer) return;
+          this.navDotsContainer.innerHTML = '';
+          this.slides.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot';
+            dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+            dot.addEventListener('click', () => this.scrollToSlide(index));
+            this.navDotsContainer.appendChild(dot);
+          });
+          this.updateUI();
+        }
+        setupAutoPlay() {
+          const btn = document.getElementById('autoPlayBtn');
+          if (btn) btn.addEventListener('click', () => this.toggleAutoPlay());
+        }
+        toggleAutoPlay() {
+          const btn = document.getElementById('autoPlayBtn');
+          this.isAutoPlay = !this.isAutoPlay;
+          if (this.isAutoPlay) {
+            this.autoPlayInterval = setInterval(() => {
+              const next = this.currentSlide < this.slides.length - 1 ? this.currentSlide + 1 : 0;
+              this.scrollToSlide(next);
+            }, 6000);
+            if (btn) btn.textContent = '暂停';
+          } else {
+            clearInterval(this.autoPlayInterval);
+            if (btn) btn.textContent = '自动播放';
+          }
+        }
+        setupHelpPanel() {
+          const btn = document.getElementById('helpBtn');
+          if (btn) btn.addEventListener('click', () => this.toggleHelp());
+          if (this.helpClose) this.helpClose.addEventListener('click', () => this.closeHelp());
+          if (this.helpOverlay) this.helpOverlay.addEventListener('click', () => this.closeHelp());
+        }
+        setupLightbox() {
+          document.querySelectorAll('.zoomable').forEach((img) => {
+            img.addEventListener('click', () => {
+              this.lightboxImage.src = img.src;
+              this.lightboxImage.alt = img.alt;
+              this.lightbox.classList.add('open');
+            });
+          });
+          if (this.lightboxClose) this.lightboxClose.addEventListener('click', () => this.closeLightbox());
+          if (this.lightbox) this.lightbox.addEventListener('click', (event) => { if (event.target === this.lightbox) this.closeLightbox(); });
+        }
+        setupFloatingUI() {
+          const show = () => {
+            document.body.classList.add('show-ui');
+            if (this.uiHideTimer) clearTimeout(this.uiHideTimer);
+          };
+          const hideSoon = () => {
+            if (this.uiHideTimer) clearTimeout(this.uiHideTimer);
+            this.uiHideTimer = setTimeout(() => {
+              if (!this.isAutoPlay && !this.isHelpOpen()) document.body.classList.remove('show-ui');
+            }, 1800);
+          };
+          show();
+          hideSoon();
+          if (this.uiHotzone) {
+            this.uiHotzone.addEventListener('mouseenter', show);
+            this.uiHotzone.addEventListener('mouseleave', hideSoon);
+          }
+          const controls = document.querySelector('.control-bar');
+          const counter = document.querySelector('.slide-counter');
+          [controls, counter].forEach((el) => {
+            if (!el) return;
+            el.addEventListener('mouseenter', show);
+            el.addEventListener('mouseleave', hideSoon);
+          });
+          window.addEventListener('mousemove', (event) => {
+            if (event.clientY > window.innerHeight - 120 || event.clientX > window.innerWidth - 160) {
+              show();
+            }
+          });
+          window.addEventListener('keydown', show);
+        }
+      }
+      new SlidePresentation();
+    </script>
+  </body>
+</html>
