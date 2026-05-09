@@ -1618,47 +1618,64 @@
       .slide-09 .panel.pad,
       .slide-11 .panel.pad,
       .slide-14 .panel.pad {
-        padding: clamp(0.9rem, 1.15vw, 1.05rem);
+        padding: clamp(0.82rem, 1vw, 0.96rem);
       }
 
       .slide-05 .bullet-list,
       .slide-09 .bullet-list,
       .slide-11 .bullet-list {
-        gap: clamp(0.38rem, 0.55vw, 0.55rem);
+        gap: clamp(0.28rem, 0.42vw, 0.42rem);
       }
 
       .slide-05 .bullet-list li,
       .slide-09 .bullet-list li,
       .slide-11 .bullet-list li {
-        padding-top: 0.66rem;
-        padding-bottom: 0.66rem;
-        font-size: clamp(0.78rem, 0.92vw, 0.9rem);
-        line-height: 1.42;
+        padding-top: 0.56rem;
+        padding-bottom: 0.56rem;
+        padding-left: clamp(1.35rem, 1.7vw, 1.7rem);
+        font-size: clamp(0.76rem, 0.88vw, 0.86rem);
+        line-height: 1.34;
+      }
+
+      .slide-05 .bullet-list li::before,
+      .slide-09 .bullet-list li::before,
+      .slide-11 .bullet-list li::before {
+        left: clamp(0.52rem, 0.8vw, 0.72rem);
+        width: 5px;
+        height: 5px;
       }
 
       .slide-05 .page-shell > .section-title {
-        font-size: clamp(1.4rem, 2.55vw, 2rem);
+        font-size: clamp(1.32rem, 2.35vw, 1.84rem);
         line-height: 1.16;
       }
 
       .slide-05 .speaker-line {
-        margin-top: 0.55rem !important;
+        margin-top: 0.42rem !important;
+        font-size: clamp(0.82rem, 0.94vw, 0.88rem);
+        line-height: 1.42;
       }
 
       .slide-09 .page-shell > .section-title {
-        font-size: clamp(1.7rem, 4.2vw, 4rem);
-        line-height: 1.06;
+        font-size: clamp(1.54rem, 3.75vw, 3.35rem);
+        line-height: 1.04;
+      }
+
+      .slide-09 .panel .section-title,
+      .slide-11 .panel .section-title {
+        font-size: clamp(0.98rem, 1.15vw, 1.08rem) !important;
       }
 
       .slide-09 .takeaway-footer {
         margin-top: 0;
-        padding: 0.75rem 1rem;
-        font-size: clamp(0.78rem, 0.92vw, 0.86rem);
+        padding: 0.64rem 0.9rem;
+        font-size: clamp(0.74rem, 0.84vw, 0.8rem);
+        line-height: 1.4;
       }
 
       .slide-11 .page-shell > .section-title {
-        font-size: clamp(1.22rem, 2.05vw, 1.8rem);
-        line-height: 1.18;
+        font-size: clamp(1.12rem, 1.8vw, 1.56rem);
+        line-height: 1.14;
       }
 
       .slide-11 .screenshot-frame {
@@ -1767,7 +1784,7 @@
       </div>
     </section>
 
-    <section class="slide compact slide-05">
+    <section class="slide compact">
       <div class="slide-content">
         <div class="page-shell">
           <div class="eyebrow-row reveal"><span class="deck-label">PAGE 02</span><span class="point-label">为什么很多人又爱又骂 AI 编程</span></div>
@@ -1796,7 +1813,7 @@
       </div>
     </section>
 
-    <section class="slide compact slide-09">
+    <section class="slide compact">
       <div class="slide-content">
         <div class="page-shell">
           <div class="eyebrow-row reveal"><span class="deck-label">PAGE 03</span><span class="status-pill">六阶段总览</span></div>
@@ -1815,7 +1832,7 @@
       </div>
     </section>
 
-    <section class="slide compact">
+    <section class="slide compact slide-05">
       <div class="slide-content">
         <div class="page-shell">
           <div class="eyebrow-row reveal"><span class="deck-label">PAGE 04</span><span class="point-label">0️⃣-1️⃣ 最容易上头的阶段</span></div>
@@ -1844,7 +1861,7 @@
       </div>
     </section>
 
-    <section class="slide compact">
+    <section class="slide compact slide-09">
       <div class="slide-content">
         <div class="page-shell">
           <div class="eyebrow-row reveal"><span class="deck-label">PAGE 05</span><span class="point-label">2️⃣-3️⃣ 开始真正像生产力</span></div>
